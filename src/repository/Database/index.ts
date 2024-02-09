@@ -14,18 +14,18 @@ export class Database {
     }));
   }
 
-  public run = (sql: string) => (
-    new Promise<void>((resolve, reject) => {
-      this.client.run(sql, (err) => {
-        err ? reject(err) : resolve();
+  public run = (sql: string, params?: any) => (
+    new Promise<sqlite3.RunResult>((resolve, reject) => {
+      this.client.run(sql, params, function (err) {
+        err ? reject(err) : resolve(this);
       });
     })
   );
 
   public get = <T>(sql: string, params?: any) => (
-    new Promise<T>((resolve, reject) => {
+    new Promise<T | undefined>((resolve, reject) => {
       this.client.get(sql, params, (err, data) => {
-        err ? reject(err) : resolve(data as T)
+        err ? reject(err) : resolve(data as T | undefined)
       })
     })
   );
