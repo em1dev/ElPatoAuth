@@ -1,5 +1,5 @@
 import { URL } from "url";
-import { Config } from "../config";
+import { Config } from "../../config";
 import { TokenCodeResponse, TokenRefreshResponse, TokenVerifyResponse } from "./types";
 
 const authenticateCode = async (code: string) => {
