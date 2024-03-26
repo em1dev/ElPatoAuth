@@ -1,79 +1,83 @@
-import { URL } from "url";
-import { Config } from "../../config";
-import { TokenCodeResponse, TokenRefreshResponse, TokenVerifyResponse } from "./types";
+import { apiClient } from '../apiClient';
+import { TokenCodeResponse, TokenRefreshResponse, TokenVerifyResponse } from './types';
 
-const authenticateCode = async (code: string) => {
-  const resp = await baseRequest({
+interface TwitchError {
+  status: number,
+  message: string
+}
+
+export interface TwitchResult<T> {
+  error?: TwitchError,
+  success?: T
+}
+
+const authenticateCode = async (
+  code: string, clientId: string, clientSecret: string, redirectUrl: string
+): Promise<TwitchResult<TokenCodeResponse>> => {
+
+  const resp = await apiClient({
     url: 'https://id.twitch.tv/oauth2/token',
     method: 'POST',
     body: {
-      'client_id': Config.TWITCH_CLIENT_ID,
+      'client_id': clientId,
       'grant_type': 'authorization_code',
-      'redirect_uri': 'http://localhost:8022/authenticate',
-      'client_secret': Config.TWITCH_SECRET,
+      'redirect_uri': redirectUrl,
+      'client_secret': clientSecret,
       code
     }
   });
-  const data = await resp.json() as TokenCodeResponse;
-  console.log(data);
-  return data;
-}
 
-const verifyToken = async (token: string) => {
-  const resp = await baseRequest({
+  if (!resp.ok) {
+    const twitchError = await resp.json() as TwitchError;
+    return { error: twitchError };
+  }
+
+  const data = await resp.json() as TokenCodeResponse;
+  return { success: data };
+};
+
+const verifyToken = async (token: string): Promise<TwitchResult<TokenVerifyResponse>> => {
+  const resp = await apiClient({
     url: 'https://id.twitch.tv/oauth2/validate',
     headers: {
       'Authorization': `OAuth ${token}`,
     }
   });
-  const data = await resp.json() as TokenVerifyResponse;
-  console.log(data);
-  return data;
-}
 
-const refreshToken = async (refreshToken: string) => {
-  const resp = await baseRequest({
+  if (!resp.ok) {
+    const twitchError = await resp.json() as TwitchError;
+    return { error: twitchError };
+  }
+
+  const data = await resp.json() as TokenVerifyResponse;
+  return { success: data };
+};
+
+const refreshToken = async (
+  refreshToken: string, clientId: string, clientSecret: string
+):Promise<TwitchResult<TokenRefreshResponse>> => {
+  const resp = await apiClient({
     url: 'https://id.twitch.tv/oauth2/token',
     method: 'POST',
     body: {
-      'client_id': Config.TWITCH_CLIENT_ID,
-      'client_secret': Config.TWITCH_SECRET,
+      'client_id': clientId,
+      'client_secret': clientSecret,
       'grant_type': 'refresh_token',
       'refresh_token': refreshToken
     }
   });
 
+  if (!resp.ok) {
+    const error = await resp.json() as TwitchError;
+    return { error };
+  }
+
   const data = await resp.json() as TokenRefreshResponse;
-  console.log(data);
-  return data;
-}
-
-interface RequestOptions {
-  url: string,
-  query?: Record<string, string | number>,
-  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
-  body?: object | null,
-  headers?: Record<string, string>,
+  return { success: data };
 };
-
-const baseRequest = ({ url, body = null, method = 'GET', query = {}, headers = {}}: RequestOptions) => {
-  const urlObject = new URL(url);
-  Object.keys(query).forEach((key) => {
-    urlObject.searchParams.set(key, query[key].toString());
-  });
-
-  return fetch(urlObject, {
-    method,
-    body: body ? JSON.stringify(body) : null,
-    headers: {
-      'content-type': 'application/json',
-      ...headers
-    }
-  });
-}
 
 export const TwitchApi = {
   authenticateCode,
   refreshToken,
   verifyToken
-}
+};

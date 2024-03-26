@@ -1,4 +1,4 @@
-import { Database } from "..";
+import { Database } from '..';
 
 export class MigrationRunner {
 
@@ -10,16 +10,38 @@ export class MigrationRunner {
 
   public run = async () => {
     await this.createTables();
-  }
+  };
 
   private createTables = async () => {
+    // EXTERNAL SERVICE
     await this._db.run(`
-      CREATE TABLE IF NOT EXISTS user (
+      CREATE TABLE IF NOT EXISTS externalService (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        app TEXT NOT NULL
+        type TEXT NOT NULL,
+        client_secret TEXT NOT NULL,
+        client_id TEXT NOT NULL,
+        fk_app_id TEXT NOT NULL,
+        FOREIGN KEY(fk_app_id) REFERENCES app(id)
       );
     `);
 
+    // APP
+    await this._db.run(`
+      CREATE TABLE IF NOT EXISTS app (
+        id TEXT PRIMARY KEY
+      );
+    `);
+
+    // USER
+    await this._db.run(`
+      CREATE TABLE IF NOT EXISTS user (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fk_app_id TEXT NOT NULL,
+        FOREIGN KEY(fk_app_id) REFERENCES app(id)
+      );
+    `);
+
+    // CONNECTION
     await this._db.run(`
       CREATE TABLE IF NOT EXISTS connection (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,8 +54,9 @@ export class MigrationRunner {
       );
     `);
 
+    // LOGIN PROVIDER
     await this._db.run(`
-      CREATE TABLE IF NOT EXISTS provider (
+      CREATE TABLE IF NOT EXISTS loginProvider (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT NOT NULL,
         user_login TEXT NOT NULL,
@@ -42,5 +65,5 @@ export class MigrationRunner {
         FOREIGN KEY(fk_user_id) REFERENCES user(id)
       );
     `);
-  }
+  };
 }

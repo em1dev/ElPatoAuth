@@ -1,69 +1,134 @@
-import { Config } from "../../config";
-import { TikTokAuthorizationResponse } from "./types";
+import { ZodError, z } from 'zod';
 
-const TIKTOK_CLIENT_KEY = Config.TIKTOK_CLIENT_KEY;
-const TIKTOK_CLIENT_SECRET = Config.TIKTOK_SECRET;
+interface TikTokError {
+  code: string,
+  message: string,
+  log_id: string
+}
 
-const refreshToken = async (refreshToken: string) => {
-  const resp = await baseRequest({
-    url: 'https://open-api.tiktok.com/oauth/refresh_token/',
-    method: 'POST',
-    query: {
-      'client_key': TIKTOK_CLIENT_KEY,
-      'grant_type': 'refresh_token',
-      'refresh_token': refreshToken
+const getUserInfo = async (token: string) => {
+  
+  const fields = [
+    // user.info.basic
+    'open_id', 'avatar_url', 'display_name', 'bio_description',
+    // user.info.profile
+    'profile_deep_link', 'username'
+  ];
+
+  const resp = await fetch(`https://open.tiktokapis.com/v2/user/info/?fields=${fields.concat(',')}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
     }
   });
 
-  if (!resp.ok) throw new Error('error from tiktok refresh api');
+  if (!resp.ok) {
+    const err = await resp.text();
+    return { error: err };
+  }
 
-  return await resp.json() as TikTokAuthorizationResponse;
-}
+  const data = await resp.json() as {
+    data: {
+      user: {
+        open_id: string,
+        avatar_url: string,
+        display_name: string,
+        bio_description: string,
+        profile_deep_link: string,
+        username: string
+      }
+    },
+    error: TikTokError
+  };
 
-const authenticateWithCode = async (code: string) => {
-  const resp = await baseRequest({
-    url: 'https://open-api.tiktok.com/oauth/access_token',
-    method: 'POST',
-    query: {
-      'client_key': TIKTOK_CLIENT_KEY,
-      'client_secret': TIKTOK_CLIENT_SECRET,
-      'grant_type': 'authorization_code',
-      code
-    }
-  });
+  if (data.error.code == 'ok') {
+    return {
+      success: data.data.user
+    };
+  }
 
-  console.log(resp.status);
-  // todo - add error handling
-  const data = await resp.json() as TikTokAuthorizationResponse;
-  return data;
-}
-
-// TODO - move to shared helper
-interface RequestOptions {
-  url: string,
-  query?: Record<string, string | number>,
-  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
-  body?: object | null,
-  headers?: Record<string, string>,
+  return {
+    error: data.error
+  };
 };
 
-const baseRequest = ({ url, body = null, method = 'GET', query = {}, headers = {}}: RequestOptions) => {
-  const urlObject = new URL(url);
-  Object.keys(query).forEach((key) => {
-    urlObject.searchParams.set(key, query[key].toString());
+const refreshToken = async (refreshToken: string, clientKey: string, clientSecret: string) => {
+
+  const body = new URLSearchParams({
+    'client_key': clientKey,
+    'client_secret': clientSecret,
+    'grant_type': 'refresh_token',
+    'refresh_token': refreshToken
   });
 
-  return fetch(urlObject, {
-    method,
-    body: body ? JSON.stringify(body) : null,
+  const resp = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
     headers: {
-      'content-type': 'application/json',
-      ...headers
-    }
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    method: 'POST',
+    body
   });
-}
+
+  if (!resp.ok) {
+    const error = await resp.json() as TikTokError;
+    return { error };
+  }
+
+  const data = await resp.json();
+  return unwrapAuthResponse(data);
+};
+
+const authenticateWithCode = async (code: string, clientKey: string, clientSecret: string, redirectUrl: string) => {
+  const body = new URLSearchParams({
+    'client_key': clientKey,
+    'client_secret': clientSecret,
+    'grant_type': 'authorization_code',
+    code,
+    redirect_uri: redirectUrl,
+  });
+
+  const resp = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    method: 'POST',
+    body
+  });
+
+  if (!resp.ok) {
+    const error = await resp.text();
+    return { error };
+  }
+
+  const data = await resp.json();
+  return unwrapAuthResponse(data);
+};
+
+const unwrapAuthResponse = (obj: unknown) => {
+  try {
+    const authResponseValidator = z.object({
+      access_token: z.string(),
+      expires_in: z.number(),
+      open_id: z.string(),
+      refresh_expires_in: z.number(),
+      refresh_token: z.string(),
+      scope: z.string(),
+    });
+    return { success: authResponseValidator.parse(obj) };
+  } catch (e) {
+    if (!(e instanceof ZodError)) throw e;
+
+    const errorValidator = z.object({
+      error: z.string(),
+      error_description: z.string(),
+      log_id: z.string()
+    });
+    return { error: errorValidator.parse(obj) };
+  }
+};
 
 export const TikTokApi = {
   authenticateWithCode,
-  refreshToken
-}
+  refreshToken,
+  getUserInfo
+};

@@ -1,0 +1,27 @@
+# Create a connection
+POST http://localhost:8022/elpatoclip/user/1/connection/tiktok
+Content-Type: application/json
+
+{
+  "code": "code",
+  "redirectUrl": "https://clip.elpato.dev"
+}
+
+###
+
+# Get a user connections
+GET http://localhost:8022/elpatoclip/user/1/connections
+
+###
+Response 
+{ 
+  token: string,
+  refresh_token: string,
+  user_id: string,
+  type: 'tiktok' | 'twitch' | 'youtube'
+}
+
+###
+
+# Delete a user connection
+DELETE http://localhost:8022/elpatoclip/user/1/connection/tiktok

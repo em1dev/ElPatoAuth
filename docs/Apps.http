@@ -1,0 +1,19 @@
+
+
+# Gets a elpatoapp
+GET http://localhost:8022/app/elpatoclip
+
+
+###
+
+# Creates or updates a pato app
+POST http://localhost:8022/app/elpatoclip
+Content-Type: application/json
+
+[
+  {
+    "type": "tiktok",
+    "clientSecret": "secret",
+    "clientId": "id"
+  }
+]

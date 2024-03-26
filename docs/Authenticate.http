@@ -1,0 +1,10 @@
+
+
+# Authenticate
+POST http://localhost:8022/elpatoclip/authenticate/tiktok
+Content-Type: application/json
+
+{
+  "code": "code",
+  "redirectUrl": "https://clip.elpato.dev"
+}
