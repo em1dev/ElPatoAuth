@@ -16,7 +16,7 @@ A authentication microservice for service with token auto refresh
 
 Get app services
 
-```json
+```
 GET /app/:appId
 
 // Response
@@ -31,7 +31,7 @@ GET /app/:appId
 ```
 
 Create or update application external services
-```json
+```
 POST /app/:appId
 
 [
@@ -49,7 +49,7 @@ POST /app/:appId
 ### Authentication
 
 Authenticate (creates an account if it does not exists on db)
-```json
+```
 POST /:appId/authenticate/:externalServiceId
 Content-Type: application/json
 
@@ -75,7 +75,7 @@ Content-Type: application/json
 ```
 
 Verify token
-```json
+```
 POST /token/verify
 Content-Type: application/json
 
@@ -92,13 +92,13 @@ Content-Type: application/json
 
 
 Create a connection
-```json
+```
 POST /:appId/user/:userId/connection/:connectionId
 Content-Type: application/json
 
 {
-  "code": string,
-  "redirectUrl": string
+  code: string,
+  redirectUrl: string
 }
 
 // Response
@@ -107,7 +107,7 @@ Content-Type: application/json
 
 
 Get a user connections
-```json
+```
 GET /:appId/user/:userId/connections
 
 // Response 
@@ -121,7 +121,7 @@ GET /:appId/user/:userId/connections
 ```
 
 Delete a user connection
-```json
+```
 DELETE /:appId/user/:userId/connection/:connectionId
 
 // Response
