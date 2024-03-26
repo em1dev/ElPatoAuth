@@ -10,7 +10,7 @@ export const encrypt = (value: string) => {
   const cipher = crypto.createDecipheriv(ALGORITHM, key, iv);
 
   const encryptedString = cipher.update(value, 'utf-8', 'hex') + cipher.final('hex');
-  return `${encryptedString}_${iv.toString('hex')}`
+  return `${encryptedString}_${iv.toString('hex')}`;
 };
 
 export const decrypt = (value: string) => {
@@ -19,4 +19,4 @@ export const decrypt = (value: string) => {
   const decipher = crypto.createDecipheriv(ALGORITHM, SECRET_KEY, Buffer.from(iv, 'hex'));
   const decipherValue = decipher.update(encryptedString, 'hex', 'utf-8') + decipher.final('utf-8');
   return decipherValue;
-}
+};

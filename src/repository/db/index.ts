@@ -1,11 +1,12 @@
-import sqlite3 from "sqlite3";
+import sqlite3 from 'sqlite3';
+import { MigrationRunner } from './migrations';
 
 export class Database {
 
   private client: sqlite3.Database;
 
   constructor(path: string, verbose: boolean = false) {
-    if (verbose) { sqlite3.verbose() };
+    if (verbose) { sqlite3.verbose(); }
 
     this.client = new sqlite3.Database(path, (err => {
       if (err) {
@@ -14,7 +15,7 @@ export class Database {
     }));
   }
 
-  public run = (sql: string, params?: any) => (
+  public run = (sql: string, params?: unknown) => (
     new Promise<sqlite3.RunResult>((resolve, reject) => {
       this.client.run(sql, params, function (err) {
         err ? reject(err) : resolve(this);
@@ -22,20 +23,22 @@ export class Database {
     })
   );
 
-  public get = <T>(sql: string, params?: any) => (
+  public get = <T>(sql: string, params?: unknown) => (
     new Promise<T | undefined>((resolve, reject) => {
       this.client.get(sql, params, (err, data) => {
-        err ? reject(err) : resolve(data as T | undefined)
-      })
+        err ? reject(err) : resolve(data as T | undefined);
+      });
     })
   );
 
-  public all = <T>(sql: string, params?: any) => (
+  public all = <T>(sql: string, params?: unknown) => (
     new Promise<Array<T>>((resolve, reject) => {
       this.client.all(sql, params, (err, data) => {
-        err ? reject(err) : resolve(data as Array<T>)
-      })
+        err ? reject(err) : resolve(data as Array<T>);
+      });
     })
   );
 }
 
+export const db = new Database('./db.db');
+(new MigrationRunner(db)).run();

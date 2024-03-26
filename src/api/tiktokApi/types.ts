@@ -4,7 +4,7 @@ export interface TikTokAuthorizationResponse {
    */
   open_id: string,
   /**
-   * comma seperated scope
+   * comma separated scope
    */
   scope: string
   access_token: string,
