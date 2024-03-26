@@ -5,6 +5,16 @@ POST http://localhost:8022/elpatoclip/authenticate/tiktok
 Content-Type: application/json
 
 {
-  "code": "code",
+  "code": "",
   "redirectUrl": "https://clip.elpato.dev"
+}
+
+###
+
+# Verify token
+POST http://localhost:8022/token/verify
+Content-Type: application/json
+
+{
+  "token": ""
 }
