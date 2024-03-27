@@ -49,7 +49,7 @@ const getUserByProvider = async (appId: string, providerUserId: string, provider
     app: appId,
     id: data.userId,
     provider: {
-      type: 'twitch',
+      type: providerId,
       userId: data.providerUserId,
       userLogin: data.providerUserLogin
     }
