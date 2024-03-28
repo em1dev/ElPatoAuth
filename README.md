@@ -1,13 +1,9 @@
-
-* left to do:
-* cron job to update tokens
-
 # El Pato Auth
 
-A authentication microservice for service with token auto refresh
+A authentication microservice for ElPato Apps. Its service agnostic and should work with TikTok, Twitch and Google Auth (pending).
 
 
-*This service is meant to be ran with other ElPato services and should not be exposed to the public network*
+*This service is meant to work with other ElPato Services and should not be exposed to the public network*
 
 
 ## Endpoints
@@ -61,17 +57,21 @@ Content-Type: application/json
 // Response
 200
 {
-  user: {
-    app: string,
-    id: number,
-    provider: {
-      type: string,
-      userId: string,
-      userLogin: string
-    }
-  },
+
   token: string // jwt token
 }
+
+A jwt should have the following format:
+user: {
+  app: string,
+  id: number,
+  provider: {
+    type: string,
+    userId: string,
+    userLogin: string
+  }
+}
+
 ```
 
 Verify token
