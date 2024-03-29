@@ -96,7 +96,7 @@ Content-Type: application/json
 
 Create a connection
 ```
-POST /:appId/user/:userId/connection/:connectionId
+POST /:appId/user/:userId/connection/:connectionTypeId
 Content-Type: application/json
 
 {
@@ -125,7 +125,7 @@ GET /:appId/user/:userId/connections
 
 Delete a user connection
 ```
-DELETE /:appId/user/:userId/connection/:connectionId
+DELETE /:appId/user/:userId/connection/:connectionTypeId
 
 // Response
 200
