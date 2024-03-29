@@ -1,4 +1,5 @@
 import { TikTokApi } from '../../api/tiktokApi';
+import { TwitchApi } from '../../api/twitchApi';
 import { TOKEN_REFRESH_SETTINGS } from '../../config';
 import { decrypt, encrypt } from '../../encryption';
 import { ExternalServiceDto, getAppServices } from '../../repository/appRepository';
@@ -90,6 +91,19 @@ const getRefreshToken = async (service: ExternalServiceDto, type: ConnectionType
     };
   }
 
+  if (type === ConnectionType.twitch) {
+    const data = await TwitchApi.refreshToken(refreshToken, service.clientId, service.clientSecret);
+    if (data.error){
+      console.error(data);
+      console.error(`Error refreshing token for service ${type}`);
+      return null;
+    }
+    return {
+      expiresIn: data.success.expires_in,
+      refreshToken: data.success.refresh_token,
+      token: data.success.access_token
+    };
+  }
 
   throw new Error('not implemented');
 };

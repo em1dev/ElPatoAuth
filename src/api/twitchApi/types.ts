@@ -11,11 +11,12 @@ export interface TokenCodeResponse {
   'expires_in': number,
   'refresh_token': string,
   'token_type': 'bearer',
-  scope: Array<string>
+  scope: Array<string>,
 }
 
 export interface TokenRefreshResponse {
   'access_token': string,
+  'expires_in': number,
   'refresh_token': string,
   'scope': Array<string>,
   'token_type': 'bearer',

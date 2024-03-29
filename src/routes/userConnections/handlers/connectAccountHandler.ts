@@ -1,4 +1,5 @@
 import { TikTokApi } from '../../../api/tiktokApi';
+import { TwitchApi } from '../../../api/twitchApi';
 import { decrypt, encrypt } from '../../../encryption';
 import { BadRequest, HttpErrorBase, NotFoundError, UnauthorizedError } from '../../../errors';
 import { ExternalServiceDto, getAppService } from '../../../repository/appRepository';
@@ -49,7 +50,7 @@ export const connectAccountHandler = async (
     tokenResponse = await getYoutubeTokens(code);
     break;
   case 'twitch':
-    tokenResponse = await getTwitchTokens(code);
+    tokenResponse = await getTwitchTokens(code, service, redirectUrl);
     break;
   default:
     throw new BadRequest(`invalid connection type ${connectionType}`);
@@ -78,12 +79,28 @@ const getTikTokTokens = async (code: string, service: ExternalServiceDto, redire
   };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const getYoutubeTokens = async (code: string):Promise<TokenResponse> => {
-  throw new Error('Youtube connection not implemented');
+const getTwitchTokens = async (code: string, service: ExternalServiceDto, redirectUrl: string):Promise<TokenResponse> => {
+  const resp = await TwitchApi.authenticateCode(code, service.clientId, service.clientSecret, redirectUrl);
+  if (resp.error) {
+    console.error(resp);
+    throw new UnauthorizedError('Unable to connect with Twitch api');
+  }
+
+  const verifyResp = await TwitchApi.verifyToken(resp.success.access_token);
+  if (verifyResp.error){
+    console.error(verifyResp);
+    throw new UnauthorizedError('Unable to connect with Twitch api');
+  }
+
+  return {
+    expiresIn: resp.success.expires_in,
+    refreshToken: resp.success.refresh_token,
+    token: resp.success.access_token,
+    userId: verifyResp.success.user_id,
+  };
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const getTwitchTokens = async (code: string):Promise<TokenResponse> => {
-  throw new Error('Twitch connection not implemented');
+const getYoutubeTokens = async (code: string):Promise<TokenResponse> => {
+  throw new Error('Youtube connection not implemented');
 };
