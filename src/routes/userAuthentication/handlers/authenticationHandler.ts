@@ -5,12 +5,16 @@ import { createUser, getUserByProvider } from '../../../repository/userRepositor
 import { ExternalServiceDto, getAppService } from '../../../repository/appRepository';
 import { decrypt } from '../../../encryption';
 import { TikTokApi } from '../../../api/tiktokApi';
+import { TokenUser } from '../../../types';
+import { createToken } from '../../../jwtService';
 
 type ProviderAuthResult = {
   refreshToken: string,
   accessToken: string,
   login: string,
-  userId: string
+  userId: string,
+  displayName: string,
+  profileImageUrl: string
 }
 
 const getAppServiceDecrypted = async (appId: string, providerId: LoginProviderType) => {
@@ -44,26 +48,35 @@ export const authenticationHandler = async (
   }
 
   // if it does not exist create it
-  const userFromDb = await getUserByProvider(appId, result.userId, providerId);
-  if (userFromDb) {
-    return userFromDb;
+  let userFromDb = await getUserByProvider(appId, result.userId, providerId);
+
+  if (!userFromDb) {
+    console.log('new user authenticated. creating user');
+    await createUser(appId, [{
+      type: providerId,
+      userId: result.userId,
+      userLogin: result.login
+    }]);
+
+    const insertedUserInDb = await getUserByProvider(appId, result.userId, providerId);
+    if (!insertedUserInDb) throw new InternalError('created entity not found. something went seriously wrong D:');
+    userFromDb = insertedUserInDb;
   }
 
-  console.log('new user authenticated. creating user');
-  await createUser(appId, [{
-    type: providerId,
-    userId: result.userId,
-    userLogin: result.login
-  }]);
+  const userResult: TokenUser = {
+    app: userFromDb.app,
+    id: userFromDb.id,
+    provider: {
+      userId: userFromDb.provider.userId,
+      displayName: result.displayName,
+      profileImageUrl: result.profileImageUrl,
+      type: userFromDb.provider.type,
+      userLogin: userFromDb.provider.userLogin
+    }
+  };
 
-  const insertedUserInDb = await getUserByProvider(appId, result.userId, providerId);
-  if (!insertedUserInDb) throw new InternalError('created entity not found. something went seriously wrong D:');
-  // TODO - create json token
-  // provider information
-  // with profile pic
-  // display name
-  // pato id
-  return insertedUserInDb;
+
+  return await createToken(userResult, service.type);
 };
 
 const handleTwitchAuth = async (code: string, service: ExternalServiceDto, redirectUrl: string): Promise<ProviderAuthResult> => {
@@ -81,11 +94,19 @@ const handleTwitchAuth = async (code: string, service: ExternalServiceDto, redir
   }
   const { login, user_id } = tokenVerifyResponse.success;
 
+  const user = await TwitchApi.getUserInfo(user_id, access_token, service.clientId);
+  if (!user) {
+    console.error('Unable to find user');
+    throw new InternalError('Unable to fetch user');
+  }
+
   return {
     refreshToken: refresh_token,
     accessToken: access_token,
     login,
-    userId: user_id
+    userId: user_id,
+    displayName: user.display_name,
+    profileImageUrl: user.profile_image_url
   };
 };
 
@@ -104,12 +125,14 @@ const handleTikTokAuth = async (code: string, service: ExternalServiceDto, redir
     throw new UnauthorizedError('Tiktok token verification failed');
   }
 
-  const { username } = userInfoResp.success;
+  const { username, display_name, avatar_url } = userInfoResp.success;
 
   return {
     refreshToken: refresh_token,
     accessToken: access_token,
     login: username,
     userId: open_id,
+    displayName: display_name,
+    profileImageUrl: avatar_url
   };
 };

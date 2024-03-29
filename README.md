@@ -61,14 +61,17 @@ Content-Type: application/json
   token: string // jwt token
 }
 
-A jwt should have the following format:
+// A jwt should have the following format:
+
 user: {
   app: string,
   id: number,
   provider: {
     type: string,
     userId: string,
-    userLogin: string
+    userLogin: string,
+    profileImageUrl: string,
+    displayName: string
   }
 }
 

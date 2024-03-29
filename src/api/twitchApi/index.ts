@@ -1,5 +1,5 @@
 import { apiClient } from '../apiClient';
-import { TokenCodeResponse, TokenRefreshResponse, TokenVerifyResponse } from './types';
+import { TokenCodeResponse, TokenRefreshResponse, TokenVerifyResponse, UserDetails } from './types';
 
 interface TwitchError {
   status: number,
@@ -10,6 +10,27 @@ export interface TwitchResult<T> {
   error?: TwitchError,
   success?: T
 }
+
+const getUserInfo = async (id: string, token: string, clientId: string) => {
+  const resp = await apiClient({
+    url: `https://api.twitch.tv/helix/users?id=${id}`,
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Client-Id': clientId
+    }
+  });
+
+  if (!resp.ok) {
+    const errorData = await resp.json();
+    console.error(`Api error ${resp.status}`, errorData);
+    return;
+  }
+
+  const data = await resp.json() as { data: Array<UserDetails> };
+  const user = data.data.find(user => user.id === id);
+  return user;
+};
 
 const authenticateCode = async (
   code: string, clientId: string, clientSecret: string, redirectUrl: string
@@ -79,5 +100,6 @@ const refreshToken = async (
 export const TwitchApi = {
   authenticateCode,
   refreshToken,
-  verifyToken
+  verifyToken,
+  getUserInfo
 };

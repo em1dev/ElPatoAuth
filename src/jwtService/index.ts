@@ -1,6 +1,6 @@
 import { KeyLike, generateKeyPair, SignJWT, jwtVerify } from 'jose';
 import { InternalError } from '../errors';
-import { TokenUser } from './tokenUser';
+import { TokenUser } from '../types';
 
 const ISSUER = 'ElPato.Auth';
 
@@ -21,7 +21,7 @@ const keyGeneration = async () => {
 
 keyGeneration();
 
-export const createToken = async (user: TokenUser) => {
+export const createToken = async (user: TokenUser, audience: string) => {
   if (!keyStore.privateKey || !keyStore.publicKey) {
     throw new InternalError('keys not generated yet');
   }
@@ -34,7 +34,7 @@ export const createToken = async (user: TokenUser) => {
     })
     .setIssuedAt()
     .setIssuer(ISSUER)
-    .setAudience('ElPato.Apps')
+    .setAudience(audience)
     .setExpirationTime('1week')
     .sign(keyStore.privateKey);
 
