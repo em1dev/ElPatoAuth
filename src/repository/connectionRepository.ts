@@ -1,6 +1,39 @@
 import { db } from './db';
 import { ConnectionType, Tables } from './types';
 
+const getAllConnectionsAboutToExpire = async (timeUntilExpiresInMs: number) => {
+  const now = Date.now();
+  const threshold = now - timeUntilExpiresInMs;
+
+  interface ConnectionData {
+    id: number,
+    token: string,
+    refreshToken: string,
+    expiresAt: number,
+    userId: string,
+    type: ConnectionType,
+    fkUserId: number,
+    appId: string
+  }
+
+  const connections = await db.all<ConnectionData>(`
+    SELECT
+      connection.id AS id,
+      connection.token,
+      connection.refresh_token as refreshToken,
+      connection.user_id as userId,
+      connection.type,
+      connection.fk_user_id as fkUserId,
+      connection.expires_at as expiresAt,
+      user.fk_app_id as appId
+    FROM ${Tables.connection} AS connection
+    INNER JOIN ${Tables.user} AS user ON connection.fk_user_id = user.id
+    WHERE connection.expires_at < $threshold
+  `, { $threshold: threshold });
+
+  return connections;
+};
+
 const getUserConnections = async (userId: number) => {
     interface ConnectionData {
       token: string,
@@ -48,12 +81,29 @@ const addUserConnection = async (
   token: string,
   refreshToken: string,
   connectionUserId: string,
+  expiresAt: number,
   type: ConnectionType
 ) => {
   await db.run(`
-      INSERT INTO ${Tables.connection} (token, refresh_token, user_id, type, fk_user_id)
-      VALUES ($token, $refreshToken, $connectionUserId, $type, $userId);
-    `, { $token: token, $refreshToken: refreshToken, $connectionUserId: connectionUserId, $type: type, $userId: userId });
+      INSERT INTO ${Tables.connection} (token, refresh_token, user_id, type, fk_user_id, expires_at)
+      VALUES ($token, $refreshToken, $connectionUserId, $type, $userId, $expiresAt);
+    `, { $token: token, $refreshToken: refreshToken, $connectionUserId: connectionUserId, $type: type, $userId: userId, $expiresAt: expiresAt });
+};
+
+const updateUserConnection = async (
+  id: number,
+  token: string,
+  refreshToken: string,
+  expiresAt: number
+) => {
+  await db.run(`
+    UPDATE ${Tables.connection}
+    SET 
+      token = $token,
+      refresh_token = $refreshToken,
+      expires_at = $expiresAt
+    WHERE id = $id
+  `, { $token: token, $refreshToken: refreshToken, $expiresAt: expiresAt, $id: id });
 };
 
 const deleteUserConnection = async (
@@ -71,5 +121,7 @@ export {
   deleteUserConnection,
   addUserConnection,
   getUserConnection,
-  getUserConnections
+  getUserConnections,
+  getAllConnectionsAboutToExpire,
+  updateUserConnection
 };

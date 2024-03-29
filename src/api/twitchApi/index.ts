@@ -6,12 +6,9 @@ interface TwitchError {
   message: string
 }
 
-export interface TwitchResult<T> {
-  error?: TwitchError,
-  success?: T
-}
+export type TwitchResult<T> = { success: T, error?: undefined } | { error: TwitchError, success?: undefined };
 
-const getUserInfo = async (id: string, token: string, clientId: string) => {
+const getUserInfo = async (id: string, token: string, clientId: string): Promise<TwitchResult<UserDetails | undefined>> => {
   const resp = await apiClient({
     url: `https://api.twitch.tv/helix/users?id=${id}`,
     method: 'GET',
@@ -22,14 +19,14 @@ const getUserInfo = async (id: string, token: string, clientId: string) => {
   });
 
   if (!resp.ok) {
-    const errorData = await resp.json();
-    console.error(`Api error ${resp.status}`, errorData);
-    return;
+    const error = await resp.json() as TwitchError;
+    console.error(`Api error ${resp.status}`, error);
+    return { error };
   }
 
   const data = await resp.json() as { data: Array<UserDetails> };
   const user = data.data.find(user => user.id === id);
-  return user;
+  return { success: user };
 };
 
 const authenticateCode = async (

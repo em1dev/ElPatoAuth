@@ -94,7 +94,7 @@ const handleTwitchAuth = async (code: string, service: ExternalServiceDto, redir
   }
   const { login, user_id } = tokenVerifyResponse.success;
 
-  const user = await TwitchApi.getUserInfo(user_id, access_token, service.clientId);
+  const { success: user } = await TwitchApi.getUserInfo(user_id, access_token, service.clientId);
   if (!user) {
     console.error('Unable to find user');
     throw new InternalError('Unable to fetch user');
