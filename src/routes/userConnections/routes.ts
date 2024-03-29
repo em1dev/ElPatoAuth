@@ -15,7 +15,7 @@ app.post('/:appId/user/:userId/connection/:connectionTypeId', async (req, res) =
       code: z.string(),
       redirectUrl: z.string()
     }).parse(req.body);
-    
+
     const appId = req.params.appId.toLowerCase();
     const connectionType = z.nativeEnum(ConnectionType).parse(req.params.connectionTypeId.toLowerCase());
     const userId = Number.parseInt(req.params.userId);

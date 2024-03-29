@@ -31,7 +31,6 @@ import './routes/patoApps/routes';
 import './routes/userConnections/routes';
 import './routes/userAuthentication/routes';
 
-// gets a guid + token from a twitch token
 app.listen(Config.PORT, () => {
   console.log(`Server started at http://localhost:${Config.PORT}`);
 });

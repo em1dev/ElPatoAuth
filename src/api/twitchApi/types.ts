@@ -20,3 +20,17 @@ export interface TokenRefreshResponse {
   'scope': Array<string>,
   'token_type': 'bearer',
 }
+
+export interface UserDetails {
+  id: string,
+  login: string,
+  display_name: string,
+  type: 'admin' | 'global_mod' | 'staff' | '',
+  broadcaster_type: 'partner' | 'affiliate' | '',
+  description: string,
+  profile_image_url: string,
+  offline_image_url: string,
+  view_count: number,
+  email: string,
+  created_at: string
+}

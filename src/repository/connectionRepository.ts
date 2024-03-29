@@ -6,7 +6,7 @@ const getUserConnections = async (userId: number) => {
       token: string,
       refresh_token: string,
       user_id: string,
-      type: string
+      type: ConnectionType
     }
 
     const connections = await db.all<ConnectionData>(`
