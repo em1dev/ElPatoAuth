@@ -30,8 +30,14 @@ export const userConnectionsHandler = async (appId: string, userId: number) => {
   const connectionsWithUserData:Array<ConnectionWithUserData> = [];
 
   for (const connection of connectionsDecrypted) {
-    const appService = await getAppService(appId, ExternalServiceType[connection.type]);
+    let appService = await getAppService(appId, ExternalServiceType[connection.type]);
     if (!appService) throw new InternalError('Service data missing');
+
+    appService = { 
+      ...appService,
+      clientId: decrypt(appService.clientId),
+      clientSecret: decrypt(appService.clientSecret)
+    };
 
     if (connection.type === ConnectionType.twitch) {
       const { success: user } = await TwitchApi.getUserInfo(connection.user_id, connection.token, appService.clientId);
