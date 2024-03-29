@@ -81,14 +81,14 @@ export const authenticationHandler = async (
 
 const handleTwitchAuth = async (code: string, service: ExternalServiceDto, redirectUrl: string): Promise<ProviderAuthResult> => {
   const authenticationResult = await TwitchApi.authenticateCode(code, service.clientId, service.clientSecret, redirectUrl);
-  if (authenticationResult.error || !authenticationResult.success) {
+  if (authenticationResult.error) {
     console.error(authenticationResult.error);
     throw new UnauthorizedError('Invalid twitch authentication');
   }
 
   const { access_token, refresh_token } = authenticationResult.success;
   const tokenVerifyResponse = await TwitchApi.verifyToken(access_token);
-  if (tokenVerifyResponse.error || !tokenVerifyResponse.success) {
+  if (tokenVerifyResponse.error) {
     console.error(tokenVerifyResponse.error);
     throw new UnauthorizedError('Twitch token verification failed');
   }

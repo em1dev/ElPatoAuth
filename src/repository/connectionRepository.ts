@@ -3,7 +3,7 @@ import { ConnectionType, Tables } from './types';
 
 const getAllConnectionsAboutToExpire = async (timeUntilExpiresInMs: number) => {
   const now = Date.now();
-  const threshold = now - timeUntilExpiresInMs;
+  const threshold = now + timeUntilExpiresInMs;
 
   interface ConnectionData {
     id: number,
