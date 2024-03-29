@@ -9,7 +9,8 @@ import { getUser } from '../../../repository/userRepository';
 interface TokenResponse {
   token: string,
   refreshToken: string,
-  userId: string
+  userId: string,
+  expiresIn: number
 }
 
 const getAppServiceDecrypted = async (appId: string, connectionType: ConnectionType) => {
@@ -57,7 +58,10 @@ export const connectAccountHandler = async (
   const encryptedToken = encrypt(tokenResponse.token);
   const encryptedRefreshToken = encrypt(tokenResponse.refreshToken);
 
-  await addUserConnection(userId, encryptedToken, encryptedRefreshToken, tokenResponse.userId, connectionType);
+  const expiresInMs = tokenResponse.expiresIn * 1000;
+  const expiresAt = Date.now() + expiresInMs;
+
+  await addUserConnection(userId, encryptedToken, encryptedRefreshToken, tokenResponse.userId, expiresAt, connectionType);
 };
 
 const getTikTokTokens = async (code: string, service: ExternalServiceDto, redirectUrl: string):Promise<TokenResponse> => {
@@ -69,7 +73,8 @@ const getTikTokTokens = async (code: string, service: ExternalServiceDto, redire
   return {
     refreshToken: resp.success.refresh_token,
     token: resp.success.access_token,
-    userId: resp.success.open_id
+    userId: resp.success.open_id,
+    expiresIn: resp.success.expires_in
   };
 };
 

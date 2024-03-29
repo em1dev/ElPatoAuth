@@ -47,6 +47,7 @@ export class MigrationRunner {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         token TEXT NOT NULL,
         refresh_token TEXT NOT NULL,
+        expires_at NUMBER NOT NULL,
         user_id TEXT NOT NULL,
         type TEXT NOT NULL,
         fk_user_id INTEGER NOT NULL,

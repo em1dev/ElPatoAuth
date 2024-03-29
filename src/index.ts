@@ -34,3 +34,5 @@ import './routes/userAuthentication/routes';
 app.listen(Config.PORT, () => {
   console.log(`Server started at http://localhost:${Config.PORT}`);
 });
+
+import './scheduler';

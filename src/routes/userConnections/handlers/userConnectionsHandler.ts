@@ -34,12 +34,12 @@ export const userConnectionsHandler = async (appId: string, userId: number) => {
     if (!appService) throw new InternalError('Service data missing');
 
     if (connection.type === ConnectionType.twitch) {
-      const userData = await TwitchApi.getUserInfo(connection.user_id, connection.token, appService.clientId);
-      if (!userData) throw new InternalError('Unable to get user for connection details');
+      const { success: user } = await TwitchApi.getUserInfo(connection.user_id, connection.token, appService.clientId);
+      if (!user) throw new InternalError('Unable to get user for connection details');
       // TODO - handle expired tokens here
       connectionsWithUserData.push({
-        displayName: userData.display_name,
-        profileImageUrl: userData.profile_image_url,
+        displayName: user.display_name,
+        profileImageUrl: user.profile_image_url,
         refreshToken: connection.refresh_token,
         token: connection.token,
         type: connection.type,
