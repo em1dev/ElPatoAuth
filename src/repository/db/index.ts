@@ -1,5 +1,4 @@
 import sqlite3 from 'sqlite3';
-import { MigrationRunner } from './migrations';
 
 export class Database {
 
@@ -41,4 +40,3 @@ export class Database {
 }
 
 export const db = new Database('./db.db');
-(new MigrationRunner(db)).run();
