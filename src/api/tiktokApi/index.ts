@@ -7,7 +7,7 @@ interface TikTokError {
 }
 
 const getUserInfo = async (token: string) => {
-  
+
   const fields = [
     // user.info.basic
     'open_id', 'avatar_url', 'display_name', 'bio_description',
