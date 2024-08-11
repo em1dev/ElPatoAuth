@@ -1,6 +1,15 @@
 import { Database } from '..';
+import { createTables } from './01_init';
+import { addIsAdminColumn } from './02_addIsAdminColumn';
+import { addPasswordProviderTable } from './03_addPasswordProviderTable';
+import { Migration } from './types';
 
 export class MigrationRunner {
+  private _migrations: Array<Migration> = [
+    createTables,
+    addIsAdminColumn,
+    addPasswordProviderTable
+  ];
 
   private _db: Database;
 
@@ -9,62 +18,32 @@ export class MigrationRunner {
   }
 
   public run = async () => {
-    await this.createTables();
+    await this.addMigrationTable();
+    const toRun = await this.getMigrationsToRun();
+    console.log(`${toRun.length} migrations to run`);
+    for (const migration of toRun) {
+      console.log(`Running migration: ${migration.id}`);
+      await migration.command(this._db);
+      await this.addMigrationToMigrationTable(migration.id);
+      console.log(`Finished running migration: ${migration.id}`);
+    }
   };
 
-  private createTables = async () => {
-    // EXTERNAL SERVICE
-    await this._db.run(`
-      CREATE TABLE IF NOT EXISTS externalService (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        type TEXT NOT NULL,
-        client_secret TEXT NOT NULL,
-        client_id TEXT NOT NULL,
-        fk_app_id TEXT NOT NULL,
-        FOREIGN KEY(fk_app_id) REFERENCES app(id)
-      );
-    `);
+  private addMigrationToMigrationTable = async (id: string) => await this._db.run(`
+    INSERT INTO migrations (id, executed_at)
+    VALUES ($id, datetime('now'))
+  `, { $id: id});
 
-    // APP
-    await this._db.run(`
-      CREATE TABLE IF NOT EXISTS app (
-        id TEXT PRIMARY KEY
-      );
-    `);
+  private addMigrationTable = async () => await this._db.run(`
+    CREATE TABLE IF NOT EXISTS migrations (
+      id TEXT PRIMARY KEY,
+      executed_at DATETIME NOT NULL
+    );
+  `);
 
-    // USER
-    await this._db.run(`
-      CREATE TABLE IF NOT EXISTS user (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        fk_app_id TEXT NOT NULL,
-        FOREIGN KEY(fk_app_id) REFERENCES app(id)
-      );
-    `);
-
-    // CONNECTION
-    await this._db.run(`
-      CREATE TABLE IF NOT EXISTS connection (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        token TEXT NOT NULL,
-        refresh_token TEXT NOT NULL,
-        expires_at NUMBER NOT NULL,
-        user_id TEXT NOT NULL,
-        type TEXT NOT NULL,
-        fk_user_id INTEGER NOT NULL,
-        FOREIGN KEY(fk_user_id) REFERENCES user(id)
-      );
-    `);
-
-    // LOGIN PROVIDER
-    await this._db.run(`
-      CREATE TABLE IF NOT EXISTS loginProvider (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        user_login TEXT NOT NULL,
-        type TEXT NOT NULL,
-        fk_user_id INTEGER NOT NULL,
-        FOREIGN KEY(fk_user_id) REFERENCES user(id)
-      );
-    `);
+  private getMigrationsToRun = async () => {
+    const migrationsAlreadyExecuted = await this._db.all<{ id: string }>('SELECT * FROM migrations');
+    const leftToRun = this._migrations.filter(m => !migrationsAlreadyExecuted.find(migrationAlreadyExecuted => migrationAlreadyExecuted.id === m.id));
+    return leftToRun;
   };
 }
