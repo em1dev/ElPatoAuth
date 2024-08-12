@@ -3,7 +3,8 @@ export enum Tables {
   connection = 'connection',
   loginProvider = 'loginProvider',
   app = 'app',
-  externalService = 'externalService'
+  externalService = 'externalService',
+  passwordProvider = 'passwordProvider'
 }
 
 export enum ConnectionType {

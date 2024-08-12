@@ -56,6 +56,41 @@ const getUserByProvider = async (appId: string, providerUserId: string, provider
   };
 };
 
+const createCredentialUser = async (appId: string, email: string, passwordEncrypted: string) => {
+  db.run('BEGIN TRANSACTION');
+  try {
+    const ctx = await db.run(`
+        INSERT INTO ${Tables.passwordProvider} (email, password_encrypted)
+        VALUES ($email, $passwordEncrypted);
+      `, { $email: email, $passwordEncrypted: passwordEncrypted });
+
+    const userCtx = await db.run(`
+        INSERT INTO ${Tables.user} (fk_app_id, fk_password_provider_id)
+        VALUES ($appId, $passwordId)
+      `, { $appId: appId, $passwordId: ctx.lastID });
+
+    db.run('COMMIT TRANSACTION');
+    return userCtx.lastID;
+  } catch(exception) {
+    db.run('ROLLBACK TRANSACTION');
+    throw exception;
+  }
+};
+
+const getUserByCredentials = async (appId: string, email:string) => {
+  const result = await db.get<{ id: number, encryptedPassword: string }>(`
+    SELECT user.id as id, passwordProvider.password_encrypted as encryptedPassword 
+    FROM ${Tables.passwordProvider} as passwordProvider
+    INNER JOIN ${Tables.user} as user
+      on user.fk_password_provider_id = passwordProvider.id
+    WHERE passwordProvider.email = $email
+    AND user.fk_app_id = $appId
+  `, { $email: email, $appId: appId });
+
+  console.log(result, appId, email);
+  return result;
+};
+
 const createUser = async (
   appId: string,
   providers: Array<{
@@ -98,5 +133,7 @@ const createUser = async (
 export {
   getUser,
   getUserByProvider,
-  createUser
+  createUser,
+  createCredentialUser,
+  getUserByCredentials
 };

@@ -16,5 +16,28 @@ POST http://localhost:8022/token/verify
 Content-Type: application/json
 
 {
-  "token": ""
+  "token": "secret"
+}
+
+
+###
+
+# Credential authentication
+POST http://localhost:8022/testApp/authenticate
+Content-Type: application/json
+
+{
+  "email": "test@gmail.com",
+  "password": "123"
+}
+
+###
+
+# Add user credentials
+POST http://localhost:8022/testApp/createPasswordAuthenticatedUser
+Content-Type: application/json
+
+{
+  "email": "test@gmail.com",
+  "password": "123"
 }

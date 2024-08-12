@@ -12,7 +12,9 @@ app.get('/app/:nameId', async (req, res) => {
     const name = z
       .string({ invalid_type_error: 'invalid app id'})
       .min(3)
-      .max(200).parse(req.params.nameId);
+      .max(200)
+      .parse(req.params.nameId)
+      .toLowerCase();
     const services = await getAppServicesHandler(name);
     if (services.length === 0) return res.status(404).send();
     return res.status(200).send(services);
@@ -26,7 +28,7 @@ app.get('/app/:nameId', async (req, res) => {
  */
 app.post('/app/:nameId', async (req, res) => {
   try {
-    const name = z.string().min(3).max(200).parse(req.params.nameId);
+    const name = z.string().min(3).max(200).parse(req.params.nameId).toLowerCase();
     const requestSchema = z.array(z.object({
       type: z.nativeEnum(ExternalServiceType),
       clientSecret: z.string(),
