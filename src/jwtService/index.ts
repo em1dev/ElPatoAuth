@@ -1,12 +1,12 @@
-import { KeyLike, generateKeyPair, SignJWT, jwtVerify } from 'jose';
+import { generateKeyPair, SignJWT, jwtVerify } from 'jose';
 import { InternalError } from '../errors';
 import { TokenUser } from '../types';
 
 const ISSUER = 'ElPato.Auth';
 
 export const keyStore: {
-  publicKey: null | KeyLike,
-  privateKey: null | KeyLike
+  publicKey: null | CryptoKey,
+  privateKey: null | CryptoKey
 } = {
   publicKey: null,
   privateKey: null 

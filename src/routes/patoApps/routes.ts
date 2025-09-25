@@ -10,7 +10,7 @@ import { getAppServicesHandler } from './handlers/getAppServicesHandler';
 app.get('/app/:nameId', async (req, res) => {
   try {
     const name = z
-      .string({ invalid_type_error: 'invalid app id'})
+      .string({ error: 'invalid app id'})
       .min(3)
       .max(200).parse(req.params.nameId);
     const services = await getAppServicesHandler(name);

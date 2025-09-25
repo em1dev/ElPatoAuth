@@ -12,7 +12,7 @@ app.use('/', (req, _, next) => {
 });
 
 export const handleError = (err: unknown, req: Request, res:Response) => {
-  console.error(err);
+  console.log(err);
   if (err instanceof HttpErrorBase) {
     res.status(err.statusCode);
     res.send(err.message);
