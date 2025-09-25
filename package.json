@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "engines": {
+    "node": ">=22.19"
+  },
   "scripts": {
     "start": "ts-node ./src/index.ts",
     "lint": "eslint .",
