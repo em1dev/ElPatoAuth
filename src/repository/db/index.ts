@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 import sqlite3 from 'sqlite3';
 
 export class Database {
