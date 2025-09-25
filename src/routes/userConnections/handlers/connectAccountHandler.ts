@@ -46,9 +46,6 @@ export const connectAccountHandler = async (
   case 'tiktok':
     tokenResponse = await getTikTokTokens(code, service, redirectUrl);
     break;
-  case 'youtube':
-    tokenResponse = await getYoutubeTokens(code);
-    break;
   case 'twitch':
     tokenResponse = await getTwitchTokens(code, service, redirectUrl);
     break;
@@ -98,9 +95,4 @@ const getTwitchTokens = async (code: string, service: ExternalServiceDto, redire
     token: resp.success.access_token,
     userId: verifyResp.success.user_id,
   };
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const getYoutubeTokens = async (code: string):Promise<TokenResponse> => {
-  throw new Error('Youtube connection not implemented');
 };

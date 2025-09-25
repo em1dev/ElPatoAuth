@@ -9,13 +9,15 @@ import { verifyToken } from '../../jwtService';
  */
 app.post('/:appId/authenticate/:providerId', async (req, res) => {
   try {
-    const { code, redirectUrl } = z.object({
+    const { code, redirectUrl, shouldUpsertConnection } = z.object({
       code: z.string(),
-      redirectUrl: z.string()
+      redirectUrl: z.string(),
+      shouldUpsertConnection: z.boolean().optional()
     }).parse(req.body);
+
     const appId = req.params.appId.toLowerCase();
-    const providerId = z.nativeEnum(LoginProviderType).parse(req.params.providerId.toLowerCase());
-    const token = await authenticationHandler(code, appId, providerId, redirectUrl);
+    const providerId = z.enum(LoginProviderType).parse(req.params.providerId.toLowerCase());
+    const token = await authenticationHandler(code, appId, providerId, redirectUrl, shouldUpsertConnection);
 
     res.json({ token });
   } catch(err) {

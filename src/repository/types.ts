@@ -8,8 +8,7 @@ export enum Tables {
 
 export enum ConnectionType {
   twitch = 'twitch',
-  tiktok = 'tiktok',
-  youtube = 'youtube'
+  tiktok = 'tiktok'
 }
 
 export enum LoginProviderType {
@@ -19,6 +18,5 @@ export enum LoginProviderType {
 
 export enum ExternalServiceType {
   twitch = 'twitch',
-  tiktok = 'tiktok',
-  youtube = 'youtube'
+  tiktok = 'tiktok'
 }
