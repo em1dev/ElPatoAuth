@@ -1,12 +1,12 @@
 
 
-# Gets a elpatoapp
+# Gets app tokens
 GET http://localhost:8022/app/elpatoclip
 
 
 ###
 
-# Creates or updates a pato app
+# Creates or updates a app
 POST http://localhost:8022/app/elpatoclip
 Content-Type: application/json
 

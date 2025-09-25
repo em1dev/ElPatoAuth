@@ -1,14 +1,12 @@
-# El Pato Auth
+# Authentication Service 
 
-A authentication microservice for ElPato Apps. Its service agnostic and should work with TikTok, Twitch and Google Auth (pending).
+A service agnostic authentication micro-server with TikTok and Twitch auth integration.
 
-
-*This service is meant to work with other ElPato Services and should not be exposed to the public network*
-
+*This service is meant to work behind a firewall and should not be exposed to the public network. Instead a separate public facing api should interact with this service.*
 
 ## Endpoints
 
-### Pato Apps
+### Apps
 
 Get app services
 

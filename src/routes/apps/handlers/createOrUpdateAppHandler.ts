@@ -2,7 +2,7 @@ import { decrypt, encrypt } from '../../../encryption';
 import { createOrUpdateApp, getAppServices } from '../../../repository/appRepository';
 import { ExternalServiceType } from '../../../repository/types';
 
-export const createOrUpdatePatoAppHandler = async (
+export const createOrUpdateAppHandler = async (
   appName: string, 
   externalServices: Array<{ 
     type: ExternalServiceType,

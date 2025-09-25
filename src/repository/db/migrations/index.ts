@@ -1,14 +1,10 @@
 import { Database } from '..';
 import { createTables } from './01_init';
-import { addIsAdminColumn } from './02_addIsAdminColumn';
-import { addPasswordProviderTable } from './03_addPasswordProviderTable';
 import { Migration } from './types';
 
 export class MigrationRunner {
   private _migrations: Array<Migration> = [
-    createTables,
-    addIsAdminColumn,
-    addPasswordProviderTable
+    createTables
   ];
 
   private _db: Database;

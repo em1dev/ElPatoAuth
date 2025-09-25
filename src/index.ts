@@ -27,7 +27,7 @@ export const handleError = (err: unknown, req: Request, res:Response) => {
   res.send('Internal error');
 };
 
-import './routes/patoApps/routes';
+import './routes/apps/routes';
 import './routes/userConnections/routes';
 import './routes/userAuthentication/routes';
 

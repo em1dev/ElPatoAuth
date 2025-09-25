@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import { app, handleError } from '../..';
 import { ExternalServiceType } from '../../repository/types';
-import { createOrUpdatePatoAppHandler } from './handlers/createOrUpdatePatoAppHandler';
+import { createOrUpdateAppHandler } from './handlers/createOrUpdateAppHandler';
 import { getAppServicesHandler } from './handlers/getAppServicesHandler';
 
 /**
- * Get pato app
+ * Get app
  */
 app.get('/app/:nameId', async (req, res) => {
   try {
@@ -22,19 +22,19 @@ app.get('/app/:nameId', async (req, res) => {
 });
 
 /**
- * Create or update a pato app
+ * Create or update a app
  */
 app.post('/app/:nameId', async (req, res) => {
   try {
     const name = z.string().min(3).max(200).parse(req.params.nameId);
     const requestSchema = z.array(z.object({
-      type: z.nativeEnum(ExternalServiceType),
+      type: z.enum(ExternalServiceType),
       clientSecret: z.string(),
       clientId: z.string()
     }));
     const externalService = requestSchema.parse(req.body);
 
-    const created = await createOrUpdatePatoAppHandler(name, externalService);
+    const created = await createOrUpdateAppHandler(name, externalService);
     return res.status(201).send(created);
   } catch(err) {
     handleError(err, req, res);
