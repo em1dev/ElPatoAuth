@@ -55,5 +55,6 @@ const getRefreshToken = async (
 };
 
 export const TokenRefreshService = {
-  getRefreshToken
+  getRefreshToken,
+  calculateExpiryDate
 };

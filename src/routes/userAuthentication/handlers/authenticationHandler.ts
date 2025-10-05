@@ -8,6 +8,7 @@ import { TikTokApi } from '../../../api/tiktokApi';
 import { TokenUser } from '../../../types';
 import { createToken } from '../../../jwtService';
 import { addUserConnection, getUserConnection, updateUserConnection } from '../../../repository/connectionRepository';
+import { TokenRefreshService } from '../../../tokenRefreshService';
 
 type ProviderAuthResult = {
   refreshToken: string,
@@ -84,8 +85,7 @@ export const authenticationHandler = async (
     const encryptedToken = encrypt(result.accessToken);
     const encryptedRefreshToken = encrypt(result.refreshToken);
 
-    const expiresInMs = result.expiresIn * 1000;
-    const expiresAt = Date.now() + expiresInMs;
+    const expiresAt = TokenRefreshService.calculateExpiryDate(result.expiresIn);
 
     const existingConnection = await getUserConnection(userFromDb.id, connectionType);
     if (existingConnection)
@@ -107,7 +107,6 @@ export const authenticationHandler = async (
       userLogin: userFromDb.provider.userLogin
     }
   };
-
 
   return await createToken(userResult, service.type);
 };

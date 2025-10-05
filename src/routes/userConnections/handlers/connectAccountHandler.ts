@@ -6,6 +6,7 @@ import { ExternalServiceDto, getAppService } from '../../../repository/appReposi
 import { addUserConnection, getUserConnection } from '../../../repository/connectionRepository';
 import { ConnectionType, ExternalServiceType } from '../../../repository/types';
 import { getUser } from '../../../repository/userRepository';
+import { TokenRefreshService } from '../../../tokenRefreshService';
 
 interface TokenResponse {
   token: string,
@@ -56,8 +57,7 @@ export const connectAccountHandler = async (
   const encryptedToken = encrypt(tokenResponse.token);
   const encryptedRefreshToken = encrypt(tokenResponse.refreshToken);
 
-  const expiresInMs = tokenResponse.expiresIn * 1000;
-  const expiresAt = Date.now() + expiresInMs;
+  const expiresAt = TokenRefreshService.calculateExpiryDate(tokenResponse.expiresIn);
 
   await addUserConnection(userId, encryptedToken, encryptedRefreshToken, tokenResponse.userId, expiresAt, connectionType);
 };
