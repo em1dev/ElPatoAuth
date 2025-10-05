@@ -4,11 +4,11 @@ A service agnostic authentication micro-server with TikTok and Twitch auth integ
 
 *This service is meant to work behind a firewall and should not be exposed to the public network. Instead a separate public facing api should interact with this service.*
 
-## Endpoints
+# Endpoints
 
-### Apps
+## Apps
 
-Get app services
+### Get app services
 
 ```
 GET /app/:appId
@@ -24,7 +24,7 @@ GET /app/:appId
 ]
 ```
 
-Create or update application external services
+### Create or update application external services
 ```
 POST /app/:appId
 
@@ -40,9 +40,10 @@ POST /app/:appId
 201
 ```
 
-### Authentication
+## Authentication
 
-Authenticate (creates an account if it does not exists on db)
+### Authenticate
+Creates an account if it does not exists on db
 ```
 POST /:appId/authenticate/:externalServiceId
 Content-Type: application/json
@@ -75,7 +76,7 @@ user: {
 
 ```
 
-Verify token
+### Verify token
 ```
 POST /token/verify
 Content-Type: application/json
@@ -89,10 +90,10 @@ Content-Type: application/json
 401 - When token is not valid
 ```
 
-### Connections
+## Connections
 
 
-Create a connection
+### Create a connection
 ```
 POST /:appId/user/:userId/connection/:connectionTypeId
 Content-Type: application/json
@@ -107,7 +108,7 @@ Content-Type: application/json
 ```
 
 
-Get a user connections
+### Get a user connections
 ```
 GET /:appId/user/:userId/connections
 
@@ -121,10 +122,18 @@ GET /:appId/user/:userId/connections
 }
 ```
 
-Delete a user connection
+### Delete a user connection
 ```
 DELETE /:appId/user/:userId/connection/:connectionTypeId
 
 // Response
+200
+```
+
+### Revoke connection token.
+
+This invalidates the current access_token and refreshes the token in the database. This should be called in the unfortunate case of leaking the access_token.
+```
+DELETE /:appId/user/:userId/connection/:connectionTypeId/revoke
 200
 ```

@@ -94,9 +94,32 @@ const refreshToken = async (
   return { success: data };
 };
 
+const revokeToken = async (
+  tokenToRevoke: string, clientId: string
+): Promise<TwitchResult<boolean>> => {
+  const resp = await apiClient({
+    url: 'https://id.twitch.tv/oauth2/revoke',
+    method: 'POST',
+    body: {
+      'client_id': clientId,
+      'token': tokenToRevoke
+    }
+  });
+
+  // 400 means token is no longer valid so might have already been revoked
+  if (resp.ok || resp.status == 400)
+  {
+    return { success: true };
+  }
+
+  const error = await resp.json() as TwitchError;
+  return { error };
+};
+
 export const TwitchApi = {
   authenticateCode,
   refreshToken,
+  revokeToken,
   verifyToken,
   getUserInfo
 };
