@@ -6,6 +6,7 @@ import { ExternalServiceDto, getAppService } from '../../../repository/appReposi
 import { addUserConnection, getUserConnection } from '../../../repository/connectionRepository';
 import { ConnectionType, ExternalServiceType } from '../../../repository/types';
 import { getUser } from '../../../repository/userRepository';
+import { TokenRefreshService } from '../../../tokenRefreshService';
 
 interface TokenResponse {
   token: string,
@@ -46,9 +47,6 @@ export const connectAccountHandler = async (
   case 'tiktok':
     tokenResponse = await getTikTokTokens(code, service, redirectUrl);
     break;
-  case 'youtube':
-    tokenResponse = await getYoutubeTokens(code);
-    break;
   case 'twitch':
     tokenResponse = await getTwitchTokens(code, service, redirectUrl);
     break;
@@ -59,8 +57,7 @@ export const connectAccountHandler = async (
   const encryptedToken = encrypt(tokenResponse.token);
   const encryptedRefreshToken = encrypt(tokenResponse.refreshToken);
 
-  const expiresInMs = tokenResponse.expiresIn * 1000;
-  const expiresAt = Date.now() + expiresInMs;
+  const expiresAt = TokenRefreshService.calculateExpiryDate(tokenResponse.expiresIn);
 
   await addUserConnection(userId, encryptedToken, encryptedRefreshToken, tokenResponse.userId, expiresAt, connectionType);
 };
@@ -98,9 +95,4 @@ const getTwitchTokens = async (code: string, service: ExternalServiceDto, redire
     token: resp.success.access_token,
     userId: verifyResp.success.user_id,
   };
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const getYoutubeTokens = async (code: string):Promise<TokenResponse> => {
-  throw new Error('Youtube connection not implemented');
 };

@@ -5,6 +5,7 @@ import { connectAccountHandler } from './handlers/connectAccountHandler';
 import { ConnectionType } from '../../repository/types';
 import { deleteUserConnectionHandler } from './handlers/deleteUserConnectionHandler';
 import { userConnectionsHandler } from './handlers/userConnectionsHandler';
+import { revokeConnectionTokenHandler } from './handlers/revokeConnectionTokenHandler';
 
 /**
  * Add a connection to a user
@@ -17,7 +18,7 @@ app.post('/:appId/user/:userId/connection/:connectionTypeId', async (req, res) =
     }).parse(req.body);
 
     const appId = req.params.appId.toLowerCase();
-    const connectionType = z.nativeEnum(ConnectionType).parse(req.params.connectionTypeId.toLowerCase());
+    const connectionType = z.enum(ConnectionType).parse(req.params.connectionTypeId.toLowerCase());
     const userId = Number.parseInt(req.params.userId);
 
     if (isNaN(userId)) throw new BadRequest('user id is not valid');
@@ -35,7 +36,7 @@ app.post('/:appId/user/:userId/connection/:connectionTypeId', async (req, res) =
 app.delete('/:appId/user/:userId/connection/:connectionTypeId', async (req, res) => {
   try {
     const appId = req.params.appId.toLowerCase();
-    const connectionType = z.nativeEnum(ConnectionType).parse(req.params.connectionTypeId.toLowerCase());
+    const connectionType = z.enum(ConnectionType).parse(req.params.connectionTypeId.toLowerCase());
     const userId = Number.parseInt(req.params.userId);
 
     if (isNaN(userId)) throw new BadRequest('user id is not valid');
@@ -47,6 +48,26 @@ app.delete('/:appId/user/:userId/connection/:connectionTypeId', async (req, res)
     handleError(err, req, res);
   }
 });
+
+/**
+ * Revoke access token from a connection
+ */
+app.delete('/:appId/user/:userId/connection/:connectionTypeId/revoke', async (req, res) => {
+  try {
+    const appId = req.params.appId.toLowerCase();
+    const connectionType = z.enum(ConnectionType).parse(req.params.connectionTypeId.toLowerCase());
+    const userId = Number.parseInt(req.params.userId);
+
+    if (isNaN(userId)) throw new BadRequest('user id is not valid');
+
+    await revokeConnectionTokenHandler(userId, appId, connectionType);
+
+    res.status(200).send();
+  } catch (err) {
+    handleError(err, req, res);
+  }
+});
+
 
 /**
  * Get a connection from a user

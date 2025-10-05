@@ -53,6 +53,7 @@ const getUserConnections = async (userId: number) => {
 
 const getUserConnection = async (userId: number, connectionType: ConnectionType) => {
     interface ConnectionData {
+      id: number,
       token: string,
       refresh_token: string,
       user_id: string,
@@ -60,7 +61,7 @@ const getUserConnection = async (userId: number, connectionType: ConnectionType)
     }
 
     const connection = await db.get<ConnectionData>(`
-      SELECT token, refresh_token, user_id, type
+      SELECT id, token, refresh_token, user_id, type
       FROM ${Tables.connection}
       WHERE fk_user_id = $userId
       AND type = $connectionType;
@@ -69,6 +70,7 @@ const getUserConnection = async (userId: number, connectionType: ConnectionType)
     if (!connection) return;
 
     return {
+      id: connection.id,
       refreshToken: connection.refresh_token,
       token: connection.token,
       type: connection.type,

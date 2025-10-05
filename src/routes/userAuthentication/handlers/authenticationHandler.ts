@@ -1,21 +1,36 @@
-import { ExternalServiceType, LoginProviderType } from '../../../repository/types';
+import { ConnectionType, ExternalServiceType, LoginProviderType } from '../../../repository/types';
 import { TwitchApi } from '../../../api/twitchApi';
 import { BadRequest, InternalError, UnauthorizedError } from '../../../errors';
 import { createUser, getUserByProvider } from '../../../repository/userRepository';
 import { ExternalServiceDto, getAppService } from '../../../repository/appRepository';
-import { decrypt } from '../../../encryption';
+import { decrypt, encrypt } from '../../../encryption';
 import { TikTokApi } from '../../../api/tiktokApi';
 import { TokenUser } from '../../../types';
 import { createToken } from '../../../jwtService';
+import { addUserConnection, getUserConnection, updateUserConnection } from '../../../repository/connectionRepository';
+import { TokenRefreshService } from '../../../tokenRefreshService';
 
 type ProviderAuthResult = {
   refreshToken: string,
   accessToken: string,
+  expiresIn: number,
   login: string,
   userId: string,
   displayName: string,
   profileImageUrl: string
 }
+
+const getConnectionProviderFromLoginProvier = (login: LoginProviderType) => {
+  switch (login)
+  {
+  case LoginProviderType.tiktok:
+    return ConnectionType.tiktok;
+  case LoginProviderType.twitch:
+    return ConnectionType.twitch;
+  default:
+    return null;
+  }
+};
 
 const getAppServiceDecrypted = async (appId: string, providerId: LoginProviderType) => {
   const service = await getAppService(appId, ExternalServiceType[providerId]);
@@ -31,7 +46,8 @@ export const authenticationHandler = async (
   code: string,
   appId: string,
   providerId: LoginProviderType,
-  redirectUrl: string
+  redirectUrl: string,
+  shouldUpsertConnection: boolean = false
 ) => {
   let result: ProviderAuthResult | null = null;
 
@@ -63,6 +79,23 @@ export const authenticationHandler = async (
     userFromDb = insertedUserInDb;
   }
 
+  const connectionType = getConnectionProviderFromLoginProvier(providerId);
+  if (shouldUpsertConnection && connectionType != null)
+  {
+    const encryptedToken = encrypt(result.accessToken);
+    const encryptedRefreshToken = encrypt(result.refreshToken);
+
+    const expiresAt = TokenRefreshService.calculateExpiryDate(result.expiresIn);
+
+    const existingConnection = await getUserConnection(userFromDb.id, connectionType);
+    if (existingConnection)
+    {
+      await updateUserConnection(userFromDb.id, encryptedToken, encryptedRefreshToken, expiresAt);
+    } else {
+      await addUserConnection(userFromDb.id, encryptedToken, encryptedRefreshToken, result.userId, expiresAt, connectionType);
+    }
+  }
+
   const userResult: TokenUser = {
     app: userFromDb.app,
     id: userFromDb.id,
@@ -75,7 +108,6 @@ export const authenticationHandler = async (
     }
   };
 
-
   return await createToken(userResult, service.type);
 };
 
@@ -86,7 +118,7 @@ const handleTwitchAuth = async (code: string, service: ExternalServiceDto, redir
     throw new UnauthorizedError('Invalid twitch authentication');
   }
 
-  const { access_token, refresh_token } = authenticationResult.success;
+  const { access_token, refresh_token, expires_in } = authenticationResult.success;
   const tokenVerifyResponse = await TwitchApi.verifyToken(access_token);
   if (tokenVerifyResponse.error) {
     console.error(tokenVerifyResponse.error);
@@ -103,6 +135,7 @@ const handleTwitchAuth = async (code: string, service: ExternalServiceDto, redir
   return {
     refreshToken: refresh_token,
     accessToken: access_token,
+    expiresIn: expires_in,
     login,
     userId: user_id,
     displayName: user.display_name,
@@ -117,7 +150,7 @@ const handleTikTokAuth = async (code: string, service: ExternalServiceDto, redir
     throw new UnauthorizedError('Tiktok token verification failed');
   }
 
-  const { access_token, refresh_token, open_id } = authenticationResult.success;
+  const { access_token, refresh_token, open_id, expires_in } = authenticationResult.success;
 
   const userInfoResp = await TikTokApi.getUserInfo(access_token);
   if (userInfoResp.error !== undefined) {
@@ -130,6 +163,7 @@ const handleTikTokAuth = async (code: string, service: ExternalServiceDto, redir
   return {
     refreshToken: refresh_token,
     accessToken: access_token,
+    expiresIn: expires_in,
     login: username,
     userId: open_id,
     displayName: display_name,
