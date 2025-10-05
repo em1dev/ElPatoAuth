@@ -43,14 +43,17 @@ POST /app/:appId
 ## Authentication
 
 ### Authenticate
-Creates an account if it does not exists on db
+Creates an account if it does not exists on db.
+
+If `shouldUpsertConnection` is set to true then it will also create a connection to the equivalent service or update a connection if it exists. So in the case you require to hold an access token for the same service you authenticate, this should save you having to re-authenticate the user to add a connection.
 ```
 POST /:appId/authenticate/:externalServiceId
 Content-Type: application/json
 
 {
   "code": string,
-  "redirectUrl": string
+  "redirectUrl": string,
+  "shouldUpsertConnection": z.boolean().optional()
 }
 
 // Response
