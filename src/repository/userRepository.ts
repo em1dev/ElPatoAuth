@@ -40,8 +40,13 @@ const getUserByProvider = async (appId: string, providerUserId: string, provider
       INNER JOIN ${Tables.loginProvider} as provider
         ON provider.fk_user_id = ${Tables.user}.id
       WHERE provider.user_id = $providerUserId
-      AND provider.type = $providerId;
-    `, { $providerUserId: providerUserId, $providerId: providerId});
+      AND provider.type = $providerId
+      AND user.fk_app_id = $appId
+    `, {
+      $providerUserId: providerUserId,
+      $providerId: providerId,
+      $appId: appId
+    });
 
   if (!data) return;
 
