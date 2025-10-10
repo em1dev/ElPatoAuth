@@ -82,6 +82,7 @@ export const authenticationHandler = async (
   const connectionType = getConnectionProviderFromLoginProvier(providerId);
   if (shouldUpsertConnection && connectionType != null)
   {
+    console.log(`upserting user connection ${userFromDb.id}`);
     const encryptedToken = encrypt(result.accessToken);
     const encryptedRefreshToken = encrypt(result.refreshToken);
 
@@ -90,7 +91,7 @@ export const authenticationHandler = async (
     const existingConnection = await getUserConnection(userFromDb.id, connectionType);
     if (existingConnection)
     {
-      await updateUserConnection(userFromDb.id, encryptedToken, encryptedRefreshToken, expiresAt);
+      await updateUserConnection(existingConnection.id, encryptedToken, encryptedRefreshToken, expiresAt);
     } else {
       await addUserConnection(userFromDb.id, encryptedToken, encryptedRefreshToken, result.userId, expiresAt, connectionType);
     }

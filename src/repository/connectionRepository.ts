@@ -93,7 +93,7 @@ const addUserConnection = async (
 };
 
 const updateUserConnection = async (
-  id: number,
+  connectionId: number,
   token: string,
   refreshToken: string,
   expiresAt: number
@@ -105,7 +105,7 @@ const updateUserConnection = async (
       refresh_token = $refreshToken,
       expires_at = $expiresAt
     WHERE id = $id
-  `, { $token: token, $refreshToken: refreshToken, $expiresAt: expiresAt, $id: id });
+  `, { $token: token, $refreshToken: refreshToken, $expiresAt: expiresAt, $id: connectionId });
 };
 
 const deleteUserConnection = async (
