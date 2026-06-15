@@ -14,7 +14,8 @@ interface ConnectionWithUserData {
   userId: string,
   type: string,
   token: string,
-  refreshToken: string
+  refreshToken: string,
+  expiresInMs: number
 }
 
 export const userConnectionsHandler = async (appId: string, userId: number)
@@ -33,6 +34,7 @@ export const userConnectionsHandler = async (appId: string, userId: number)
   }));
 
   const connectionsWithUserData:Array<ConnectionWithUserData> = [];
+  const now = Date.now();
 
   for (const connection of connectionsDecrypted) {
     let appService = await getAppService(appId, ExternalServiceType[connection.type]);
@@ -56,7 +58,8 @@ export const userConnectionsHandler = async (appId: string, userId: number)
         refreshToken: connection.refresh_token,
         token: connection.token,
         type: connection.type,
-        userId: connection.user_id
+        userId: connection.user_id,
+        expiresInMs: connection.expires_at - now
       });
     }
 
@@ -71,14 +74,27 @@ export const userConnectionsHandler = async (appId: string, userId: number)
         refreshToken: connection.refresh_token,
         token: connection.token,
         type: connection.type,
-        userId: connection.user_id
+        userId: connection.user_id,
+        expiresInMs: connection.expires_at - now
       });
     }
 
     if (connection.type == ConnectionType.youtube) {
-      const channel = await googleApi.getYoutubeChannel(connection.token);
-      if (!channel)
-        return HandlerApiResult.Error(500, 'No youtube channel found');
+      const resp = await googleApi.getYoutubeChannel(connection.token, connection.user_id);
+
+      if (resp.hasError) {
+        switch (resp.error)
+        {
+        case 'NotFound':
+          return HandlerApiResult.Error(500, 'No youtube channel found');
+        case 'QuotaExceeded':
+          return HandlerApiResult.Error(500, 'Youtube quota exceeded'); // should still return twitch credentials
+        case 'BadRequest':
+          return HandlerApiResult.Error(500, 'Youtube api error');
+        }
+      }
+
+      const channel = resp.success;
 
       connectionsWithUserData.push({
         displayName: channel.snippet.title,
@@ -86,7 +102,8 @@ export const userConnectionsHandler = async (appId: string, userId: number)
         refreshToken: connection.refresh_token,
         token: connection.token,
         type: connection.type,
-        userId: connection.user_id
+        userId: connection.user_id,
+        expiresInMs: connection.expires_at - now
       });
     }
   }

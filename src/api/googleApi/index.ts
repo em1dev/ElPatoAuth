@@ -1,11 +1,23 @@
 import { URLSearchParams } from 'url';
-import { ChannelInformationResponse, GoogleRefreshTokenResponse, GoogleTokenResponse } from './types';
+import { ChannelInformation, ChannelInformationResponse, GoogleApiError, GoogleRefreshTokenResponse, GoogleTokenResponse, InternalGoogleApiResult } from './types';
 import { logger } from '../../logger';
+import { daysInSeconds, RedisCache } from '../../cache';
 
+const getYoutubeChannelCacheKey = (channelId: string) => `youtube-channel-id-${channelId}`;
 const getYoutubeChannel = async (
-  token: string
-) =>
-{
+  token: string,
+  channelId?: string
+):Promise<InternalGoogleApiResult<ChannelInformation>> => {
+  const cacheStore = RedisCache.getInstance();
+
+  if (channelId)
+  {
+    const cachedData = await cacheStore.getItem<ChannelInformation>(getYoutubeChannelCacheKey(channelId));
+    if (cachedData) {
+      return { success: cachedData, hasError: false };
+    }
+  }
+
   const params = new URLSearchParams({
     part: 'status,id,snippet',
     mine: 'true',
@@ -18,10 +30,31 @@ const getYoutubeChannel = async (
   });
 
   if (!resp.ok)
-    return;
+  {
+    const data = await resp.json() as GoogleApiError;
+    const hasExceededQuota = data.error.errors.findIndex(e => e.reason == 'quotaExceeded') != -1;
+    if (hasExceededQuota)
+    {
+      logger.error('Youtube api quota exceeded!');
+      return { error: 'QuotaExceeded', hasError: true };
+    }
+    logger.error(data);
+    return { error: 'BadRequest', hasError: true };
+  }
 
   const data = await resp.json() as ChannelInformationResponse;
-  return data.items.at(0);
+  const channel = data.items.at(0);
+  if (channel) {
+    await cacheStore
+      .setItem<ChannelInformation>(
+        getYoutubeChannelCacheKey(channel.id),
+        channel,
+        daysInSeconds(1)
+      );
+    return { success: channel, hasError: false };
+  }
+
+  return { error: 'NotFound', hasError: true };
 };
 
 const authenticateCode = async (

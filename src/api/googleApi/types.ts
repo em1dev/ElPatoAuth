@@ -1,3 +1,25 @@
+export type GoogleApiErrorReason = 'QuotaExceeded' | 'BadRequest' | 'NotFound';
+
+export type InternalGoogleApiResult<T> = {
+  hasError: true,
+  error: GoogleApiErrorReason
+} | {
+  hasError: false,
+  success: T
+}
+
+export interface GoogleApiError {
+  error: {
+    code: number,
+    message: string,
+    errors: Array<{
+      message: string,
+      domain: 'youtube.quota' | string,
+      reason: 'quotaExceeded' | string
+    }>
+  }
+}
+
 export interface GooglePagination<T>
 {
   kind: string,
@@ -16,7 +38,8 @@ export interface GoogleThumbnailImage
   height: number
 }
 
-export type ChannelInformationResponse = GooglePagination<{
+export type ChannelInformationResponse = GooglePagination<ChannelInformation>;
+export type ChannelInformation = {
   kind: string,
   etag: string,
   id: string,
@@ -30,7 +53,7 @@ export type ChannelInformationResponse = GooglePagination<{
       high: GoogleThumbnailImage
     },
   }
-}>;
+};
 
 export interface GoogleTokenResponse
 {
@@ -41,7 +64,6 @@ export interface GoogleTokenResponse
   scope: string,
   token_type: 'Bearer'
 }
-
 
 export interface GoogleRefreshTokenResponse
 {

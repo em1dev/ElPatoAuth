@@ -37,13 +37,14 @@ const getAllConnectionsAboutToExpire = async (timeUntilExpiresInMs: number) => {
 const getUserConnections = async (userId: number) => {
     interface ConnectionData {
       token: string,
+      expires_at: number,
       refresh_token: string,
       user_id: string,
       type: ConnectionType
     }
 
     const connections = await db.all<ConnectionData>(`
-      SELECT token, refresh_token, user_id, type
+      SELECT token, refresh_token, user_id, type, expires_at
       FROM ${Tables.connection}
       WHERE fk_user_id = $userId
     `, { $userId: userId });

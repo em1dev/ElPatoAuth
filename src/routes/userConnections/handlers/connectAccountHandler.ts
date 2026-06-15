@@ -119,9 +119,21 @@ const getYoutubeTokens = async (code: string, service: ExternalServiceDto, redir
     return;
   }
 
-  const channel = await googleApi.getYoutubeChannel(tokens.access_token);
-  if (!channel) {
-    logger.info('Authenticated user does not have a youtube channel');
+  const resp = await googleApi.getYoutubeChannel(tokens.access_token);
+  if (resp.hasError) {
+    switch (resp.error)
+    {
+    case 'NotFound':
+      logger.info('Authenticated user does not have a youtube channel');
+      break;
+    case 'QuotaExceeded':
+      logger.info('Youtube quota exceeded!');
+      break;
+    case 'BadRequest':
+      logger.info('Youtube API error');
+      break;
+    }
+
     // revoke to avoid locking the connection on next connection
     // as refresh token can only be fetched once
     await googleApi.revokeToken(tokens.access_token);
@@ -132,6 +144,6 @@ const getYoutubeTokens = async (code: string, service: ExternalServiceDto, redir
     expiresIn: tokens.expires_in,
     refreshToken: tokens.refresh_token,
     token: tokens.access_token,
-    userId: channel.id,
+    userId: resp.success.id,
   };
 };
