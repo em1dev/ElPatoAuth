@@ -37,7 +37,8 @@ pnpm migrate
 
 # 🗒️ Requirements
 
-This service uses redis. A connection string to the redis instance must be included in the .env file.
+This service uses redis. If you are using docker compose redis is included and you don't need `REDIS_URL`
+
 
 A .env file with the following keys is required
 
