@@ -1,4 +1,4 @@
-import { daysInSeconds, RedisCache } from '../../cache';
+import { RedisCache } from '../../cache';
 import { logger } from '../../logger';
 import { apiClient } from '../apiClient';
 import { TokenCodeResponse, TokenRefreshResponse, TokenVerifyResponse, UserDetails } from './types';
@@ -10,12 +10,7 @@ interface TwitchError {
 
 export type TwitchResult<T> = { success: T, error?: undefined } | { error: TwitchError, success?: undefined };
 
-const getUserInfo = async (id: string, token: string, clientId: string): Promise<TwitchResult<UserDetails | undefined>> => {
-  const cache = RedisCache.getInstance();
-  const cacheKey = `twitch-user-id-${id}`;
-  const cachedUser = await cache.getItem<UserDetails>(cacheKey);
-  if (cachedUser) return { success: cachedUser };
-
+const _getUserInfoInternal = async (id: string, token: string, clientId: string): Promise<TwitchResult<UserDetails | undefined>> => {
   const resp = await apiClient({
     url: `https://api.twitch.tv/helix/users?id=${id}`,
     method: 'GET',
@@ -34,11 +29,31 @@ const getUserInfo = async (id: string, token: string, clientId: string): Promise
   const data = await resp.json() as { data: Array<UserDetails> };
   const user = data.data.find(user => user.id === id);
 
-  if (user) {
-    await cache.setItem<UserDetails>(cacheKey, user, daysInSeconds(1));
-  }
-
   return { success: user };
+};
+
+const getUserInfo = async (id: string, token: string, clientId: string): Promise<TwitchResult<UserDetails | undefined>> => {
+  const cache = RedisCache.getInstance();
+  const cacheKey = `twitch-user-id-${id}`;
+  const cachedUser = await cache.getItem<UserDetails>(cacheKey);
+  if (cachedUser) {
+    // update cache in background
+    _getUserInfoInternal(id, token, clientId)
+      .then(result => {
+        if (result.success) {
+          cache.setItem<UserDetails>(cacheKey, result.success);
+        }
+      });
+
+    return {
+      success: cachedUser
+    };
+  }
+  const result = await _getUserInfoInternal(id, token, clientId);
+  if (result.success) {
+    await cache.setItem<UserDetails>(cacheKey, result.success);
+  }
+  return result;
 };
 
 const authenticateCode = async (

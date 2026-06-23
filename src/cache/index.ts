@@ -46,9 +46,14 @@ export class RedisCache
   };
 
   public setItem = async <T>(
-    key: string, item: T, cacheDurationInSeconds: number
+    key: string, item: T, cacheDurationInSeconds?: number
   ) => {
-    await this._client
-      .setEx(key, cacheDurationInSeconds, JSON.stringify(item));
+    if (cacheDurationInSeconds != undefined) {
+      await this._client
+        .setEx(key, cacheDurationInSeconds, JSON.stringify(item));
+    } else {
+      await this._client
+        .set(key, JSON.stringify(item));
+    }
   };
 }
